@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 import nest_asyncio
 from threading import Thread
 from flask import Flask, request, jsonify, render_template
 from tensorflow.keras.models import load_model
-from PIL import Image
+import cv2
 import numpy as np
 import os
 
@@ -34,24 +31,21 @@ def preprocess_image(image):
     - Resize the image
     - Normalize the pixel values
     """
-    # Convert the image to grayscale (mode 'L')
-    image = image.convert('L')  
-    
+    # Convert the image to grayscale using OpenCV (cv2)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
+
     # Resize the image to the expected input size (224x224 for most CNN models)
-    image = image.resize((224, 224))  
-    
-    # Convert the image to a NumPy array
-    image = np.array(image)
-    
+    image = cv2.resize(image, (224, 224))  # Resize to 224x224
+
     # Normalize the pixel values (scale from 0 to 1)
     image = image / 255.0  
-    
+
     # Add an extra dimension for the channel (grayscale image has 1 channel)
     image = np.expand_dims(image, axis=-1)  
-    
+
     # Add batch dimension for model input
     image = np.expand_dims(image, axis=0)  
-    
+
     return image
 
 # Route to serve the homepage
@@ -84,37 +78,37 @@ def classify():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
 
-        # Open and preprocess the image
-        image = Image.open(file_path).convert('RGB')  # Ensure the image is in RGB format
+        # Open the image using OpenCV
+        image = cv2.imread(file_path)  # Read the image with OpenCV
+        if image is None:
+            raise Exception('Failed to open image')
+
+        # Preprocess the image
         preprocessed_image = preprocess_image(image)
 
         # Predict using the model
         prediction = model.predict(preprocessed_image)
-        
+
         # Debugging information: print the prediction array
         print(f"Model prediction raw output: {prediction}")
 
         # Map the prediction to the correct label
         class_labels = ['normal', 'abnormal', 'history of MI', 'MI']
-        
+
         # Get the class with the highest probability
         predicted_class = class_labels[np.argmax(prediction)]  # Get the class with highest probability
-        
+
         # Return the classification result
         return jsonify({'file': file.filename, 'prediction': predicted_class})
-    
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 # Main entry point for running the app in a separate thread (for Jupyter notebook compatibility)
 def run_app():
-    # Gunicorn will run the Flask app, so you don't need app.run() here for production
-    app.run(host='0.0.0.0', port=5004, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=5003, debug=True, use_reloader=False)
 
 if __name__ == '__main__':
-    # Uncomment if running in a local environment for testing
-    # thread = Thread(target=run_app)
-    # thread.start()
-
-    # Use Gunicorn for production environments
-    app.run(debug=False)
+    # Run Flask in a separate thread to avoid blocking the Jupyter notebook
+    thread = Thread(target=run_app)
+    thread.start()
