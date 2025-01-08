@@ -5,4 +5,6 @@ itsdangerous==1.1.0
 Jinja2==2.11.3
 MarkupSafe==1.1.1
 Werkzeug==1.0.1
-nest_asyncio==1.5.4 
+nest_asyncio==1.5.4
+tensorflow==2.11.0  # Add this line to include TensorFlow
+Pillow==9.0.0  # Add this line to include Pillow (if it's not installed already)
