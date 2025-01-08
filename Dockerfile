@@ -1,39 +1,30 @@
-# Use a Python base image
+# Use Python as base image
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Set working directory
+WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    make \
-    build-essential \
-    python3-dev \
-    libffi-dev \
-    libssl-dev \
-    && apt-get clean
+RUN apt-get update && \
+    apt-get install -y gcc g++ gfortran build-essential python3-dev
 
-# Create and activate virtual environment
+# Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Upgrade pip
+# Upgrade pip and set compiler flags
 RUN pip install --upgrade pip
+ENV CFLAGS="-Wno-stringop-overflow"
+ENV CXXFLAGS="-Wno-stringop-overflow"
 
-# Copy requirements.txt
-COPY requirements.txt .
+# Copy application code
+COPY . .
 
 # Install dependencies
 RUN pip install -r requirements.txt
 
-# Copy project files
-COPY . .
-
 # Expose port
-EXPOSE 8000
+EXPOSE 8080
 
-# Command to run application
+# Start application
 CMD ["python", "main.py"]
