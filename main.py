@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import nest_asyncio
 from threading import Thread
 from flask import Flask, request, jsonify, render_template
@@ -111,10 +108,13 @@ def classify():
 
 # Main entry point for running the app in a separate thread (for Jupyter notebook compatibility)
 def run_app():
-    app.run(host='0.0.0.0', port=5004, debug=True, use_reloader=False)
+    # Gunicorn will run the Flask app, so you don't need app.run() here for production
+    app.run(host='0.0.0.0', port=5004, debug=False, use_reloader=False)
 
 if __name__ == '__main__':
-    # Run Flask in a separate thread to avoid blocking the Jupyter notebook
-    thread = Thread(target=run_app)
-    thread.start()
+    # Uncomment if running in a local environment for testing
+    # thread = Thread(target=run_app)
+    # thread.start()
 
+    # Use Gunicorn for production environments
+    app.run(debug=False)
