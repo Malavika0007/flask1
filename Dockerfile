@@ -6,7 +6,10 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y gcc g++ gfortran build-essential python3-dev
+    apt-get install -y \
+    gcc g++ gfortran build-essential python3-dev \
+    libjpeg-dev zlib1g-dev libopencv-dev && \
+    apt-get clean
 
 # Create virtual environment
 RUN python -m venv /opt/venv
@@ -20,7 +23,10 @@ ENV CXXFLAGS="-Wno-stringop-overflow"
 # Copy application code
 COPY . .
 
-# Install dependencies
+# Print requirements.txt for debugging
+RUN cat requirements.txt
+
+# Install Python dependencies
 RUN pip install -r requirements.txt
 
 # Expose port
