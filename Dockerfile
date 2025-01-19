@@ -1,5 +1,5 @@
 # Use Python as base image
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
@@ -8,22 +8,20 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y \
     gcc g++ gfortran build-essential python3-dev \
-    libjpeg-dev zlib1g-dev libopencv-dev && \
+    libjpeg-dev zlib1g-dev libopencv-dev liblapack-dev libblas-dev && \
     apt-get clean
 
 # Create virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Upgrade pip and set compiler flags
-RUN pip install --upgrade pip
-ENV CFLAGS="-Wno-stringop-overflow"
-ENV CXXFLAGS="-Wno-stringop-overflow"
+# Upgrade pip and install utilities
+RUN pip install --upgrade pip setuptools wheel
 
 # Copy application code
 COPY . .
 
-# Print requirements.txt for debugging
+# Debugging step: Log the requirements file
 RUN cat requirements.txt
 
 # Install Python dependencies
